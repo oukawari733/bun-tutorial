@@ -1,21 +1,21 @@
 export class Router {
     constructor() {
-        this.routes = {};
+        this.routes = [];
     }
 
-    addRoute(path, handler) {
-        this.routes[path] = handler;
+    addRoute(path, handler, options = { method: 'GET' }) {
+        this.routes.push({ path, handler, method: options.method });
     }
 
     handleRequest(req, res) {
-        const { url } = req;
-        const handler = this.routes[url];
+        const url = new URL(req.url, `https://${req.headers.host}`);
+        const route = this.routes.find(r => r.path === url.pathname && r.method === req.method);
 
-        if (handler) {
-            handler(req, res);
+        if (route) {
+            route.handler(req, res);
         } else {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('404 Not Found');
+            res.statusCode = 404;
+            res.end(JSON.stringify({ error: 'Not Found' }));
         }
     }
 }
