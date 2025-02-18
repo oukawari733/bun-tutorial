@@ -11,6 +11,32 @@ const PORT = process.env.PORT || 3000;
 const router = new Router();
 registerRoutes(router);
 
+// Function to serve Swagger UI HTML
+const serveSwaggerUI = (req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Swagger UI</title>
+                <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4/swagger-ui.css">
+            </head>
+            <body>
+                <div id="swagger-ui"></div>
+                <script src="https://unpkg.com/swagger-ui-dist@4/swagger-ui-bundle.js"></script>
+                <script>
+                    window.onload = function() {
+                        SwaggerUIBundle({
+                            url: "/docs/openapi.yaml", // Path to your OpenAPI spec
+                            dom_id: '#swagger-ui',
+                        });
+                    };
+                </script>
+            </body>
+        </html>
+    `);
+};
+
 // Function to start the server
 const startServer = async () => {
     try {
@@ -20,14 +46,31 @@ const startServer = async () => {
         logger.info('✅ Connected to PostgreSQL');
 
         // Create and start the HTTP server
-        const server = createServer((req, res) => {
+        const server = createServer(async (req, res) => {
             // Log incoming requests
             logger.info(`${req.method} - ${req.url}`);
+
+            // Serve Swagger UI
+            if (req.url === '/api-docs') {
+                return serveSwaggerUI(req, res);
+            }
+
+            // Serve OpenAPI specification
+            if (req.url === '/docs/openapi.yaml') {
+                const yamlFile = Bun.file('./docs/openapi.yaml');
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/x-yaml');
+                const content = await yamlFile.text(); // Read the file content as text
+                return res.end(content); // Send the file content as the response
+            }
+
+            // Handle API routes
             router.handleRequest(req, res);
         });
 
         server.listen(PORT, () => {
             logger.info(`🚀 Server is running on http://localhost:${PORT}`);
+            logger.info(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
         });
     } catch (error) {
         logger.error('❌ Failed to start the server:', error.message);

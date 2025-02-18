@@ -1,0 +1,100 @@
+openapi: 3.0.0
+info:
+  title: Backend Template API
+  description: A clean and modular backend template built with Bun.js and PostgreSQL.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local server
+tags:
+  - name: Calculator
+    description: Operations related to calculations
+paths:
+  /api/calculate:
+    post:
+      tags:
+        - Calculator
+      summary: Perform a calculation
+      description: Perform basic arithmetic operations (+, -, *, /).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                numbers:
+                  type: array
+                  items:
+                    type: number
+                  example: [10, 5]
+                operator:
+                  type: string
+                  enum: ["+", "-", "*", "/"]
+                  example: "+"
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  numbers:
+                    type: array
+                    items:
+                      type: number
+                  operator:
+                    type: string
+                  result:
+                    type: number
+              example:
+                numbers: [10, 5]
+                operator: "+"
+                result: 15
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+              example:
+                error: "Numbers must be an array of numbers."
+  /api/history:
+    get:
+      tags:
+        - Calculator
+      summary: Get calculation history
+      description: Retrieve the history of all calculations.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    numbers:
+                      type: array
+                      items:
+                        type: number
+                    operator:
+                      type: string
+                    result:
+                      type: number
+                    created_at:
+                      type: string
+                      format: date-time
+              example:
+                - id: 1
+                  numbers: [10, 5]
+                  operator: "+"
+                  result: 15
+                  created_at: "2023-10-18T12:34:56Z"
