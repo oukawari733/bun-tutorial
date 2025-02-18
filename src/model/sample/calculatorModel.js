@@ -1,30 +1,28 @@
-// Define a static method to perform calculations
 export class CalculatorModel {
-    static calculate(num1, num2, operator) {
-        let result;
-
-        // Perform the calculation based on the operator
+    static calculate(numbers, operator) {
         switch (operator) {
-            case '+':
-                result = num1 + num2;
-                break;
-            case '-':
-                result = num1 - num2;
-                break;
-            case '*':
-                result = num1 * num2;
-                break;
-            case '/':
-                if (num2 === 0) {
-                    throw new Error('Division by zero is not allowed.');
-                }
-                result = num1 / num2;
-                break;
+            case 'average':
+                return { numbers, operator, result: numbers.reduce((a, b) => a + b, 0) / numbers.length };
+            case 'sum':
+                return { numbers, operator, result: numbers.reduce((a, b) => a + b, 0) };
+            case 'product':
+                return { numbers, operator, result: numbers.reduce((a, b) => a * b, 1) };
             default:
-                throw new Error('Invalid operator.');
+                // Handle basic operators (+, -, *, /)
+                let result = numbers[0];
+                for (let i = 1; i < numbers.length; i++) {
+                    switch (operator) {
+                        case '+': result += numbers[i]; break;
+                        case '-': result -= numbers[i]; break;
+                        case '*': result *= numbers[i]; break;
+                        case '/':
+                            if (numbers[i] === 0) throw new Error('Division by zero is not allowed.');
+                            result /= numbers[i];
+                            break;
+                        default: throw new Error('Invalid operator.');
+                    }
+                }
+                return { numbers, operator, result };
         }
-
-        // Return the result as an object
-        return { result };
     }
 }
