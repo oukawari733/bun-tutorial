@@ -38,12 +38,6 @@ cd backend-template
 bun install
 
 ```
-### Step 3: add postgresql
-
-```bash
-bun add pg
-
-```
 
 ---
 

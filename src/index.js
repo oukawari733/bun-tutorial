@@ -1,4 +1,5 @@
 import 'dotenv/config'; // Load environment variables
+import logger from './utils/logger.js';
 import {createServer} from 'http';
 import {Router} from './lib/router.js';
 import {registerRoutes} from './controllers/indexController.js';
@@ -13,19 +14,23 @@ registerRoutes(router);
 // Function to start the server
 const startServer = async () => {
     try {
-        // Connect to the database
+        // Log database connection attempt
+        logger.info('Connecting to PostgreSQL...');
         await connectToDatabase();
+        logger.info('✅ Connected to PostgreSQL');
 
         // Create and start the HTTP server
         const server = createServer((req, res) => {
+            // Log incoming requests
+            logger.info(`${req.method} - ${req.url}`);
             router.handleRequest(req, res);
         });
 
         server.listen(PORT, () => {
-            console.log(`🚀 Server is running on http://localhost:${PORT}`);
+            logger.info(`🚀 Server is running on http://localhost:${PORT}`);
         });
     } catch (error) {
-        console.error('❌ Failed to start the server:', error.message);
+        logger.error('❌ Failed to start the server:', error.message);
         process.exit(1); // Exit the process with an error code
     }
 };
