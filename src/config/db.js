@@ -32,3 +32,5 @@ export const getDbClient = () => {
     }
     return client;
 };
+
+export default client;
