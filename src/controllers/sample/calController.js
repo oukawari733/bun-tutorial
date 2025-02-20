@@ -1,18 +1,34 @@
-import {CalculatorModel} from '../../model/sample/calculatorModel.js';
+import {t} from "elysia"; // Elysia's built-in validation
+import {CalculatorModel} from "../../model/sample/calculatorModel.js";
+import {validateCalculatorInput} from "../../utils/validationMiddleware.js";
 
-
-export const calculate = async (req, res) => {
-    const { numbers, operator } = req.body;
-
+// Elysia automatically provides `body` in context
+const calculate = async ({ body }) => {
     try {
+        const { numbers, operator } = body;
         const result = CalculatorModel.calculate(numbers, operator);
-
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        return res.end(JSON.stringify(result));
+        return { result };
     } catch (error) {
-        console.error('Error:', error.message);
-        res.statusCode = 500;
-        return res.end(JSON.stringify({ error: error.message }));
+        return { error: error.message };
     }
 };
+
+// Register routes as an Elysia plugin
+export const calculatorRoutes = (app) =>
+    app
+        .post(
+            "/api/calculate",
+            calculate,
+            {
+                beforeHandle: [validateCalculatorInput], // Middleware validation
+                body: t.Object({ numbers: t.Array(t.Number()), operator: t.String() }) // Type validation
+            }
+        )
+        .post(
+            "/api/calculate3",
+            calculate,
+            {
+                beforeHandle: [validateCalculatorInput], // Middleware validation
+                body: t.Object({ numbers: t.Array(t.Number()), operator: t.String() }) // Type validation
+            }
+        );

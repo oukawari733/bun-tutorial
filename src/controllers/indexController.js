@@ -1,10 +1,8 @@
-import {calculate} from './sample/calController.js';
-import {validateCalculatorInput} from "../utils/validationMiddleware.js";
+import {calculatorRoutes} from "./sample/calController.js";
 
+// Function to register all routes in Elysia
+export const registerAllRoutes = (app) => {
+    calculatorRoutes(app);
 
-export const registerRoutes = (router) => {
-    // Register the /api/calculate route
-    router.addRoute('/api/calculate', [validateCalculatorInput, calculate], { method: 'POST' });
-
-    // Add more routes here for other controllers
+    // Add more route registrations here if needed
 };

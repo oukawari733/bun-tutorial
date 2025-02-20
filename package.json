@@ -9,13 +9,15 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "@elysiajs/swagger": "^1.2.1",
     "dotenv": "^16.4.7",
-    "elysia": "^1.2.12",
+    "elysia": "^1.2.15",
     "express": "^4.21.2",
     "mongodb": "^6.13.0",
     "pg": "^8.13.3",
     "pino": "^9.6.0",
     "pino-pretty": "^13.0.0",
+    "swagger-jsdoc": "^6.2.8",
     "swagger-ui-dist": "^5.19.0",
     "swagger-ui-express": "^5.0.1",
     "yamljs": "^0.3.0"
