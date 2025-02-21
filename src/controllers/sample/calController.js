@@ -23,12 +23,4 @@ export const calculatorRoutes = (app) =>
                 beforeHandle: [validateCalculatorInput], // Middleware validation
                 body: t.Object({ numbers: t.Array(t.Number()), operator: t.String() }) // Type validation
             }
-        )
-        .post(
-            "/api/calculate3",
-            calculate,
-            {
-                beforeHandle: [validateCalculatorInput], // Middleware validation
-                body: t.Object({ numbers: t.Array(t.Number()), operator: t.String() }) // Type validation
-            }
         );
