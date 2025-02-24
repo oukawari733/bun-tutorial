@@ -24,16 +24,15 @@ const app = new Elysia()
             components: {
                 securitySchemes: {
                     BearerAuth: {
-                        type: "https",
+                        type: "http", // ✅ Fix type
                         scheme: "bearer",
                         bearerFormat: "JWT"
                     }
                 }
             },
-            security: [{ BearerAuth: [] }] // Apply globally except public routes
+            security: [{ BearerAuth: [] }] // ✅ Apply authentication globally
         }
     }))
-
 
     // Global authentication middleware (except for Swagger & Login)
     .onBeforeHandle(({ request, set, jwt }) => {
@@ -41,10 +40,10 @@ const app = new Elysia()
         const url = new URL(request.url, `https://${request.headers.host}`).pathname;
 
         if (url.startsWith("/swagger") || publicRoutes.includes(url)) {
-            return; // Allow access to Swagger and login route
+            return; // ✅ Allow access to Swagger and login route
         }
 
-        return verifyToken({ request, set, jwt }); // Protect all other routes
+        return verifyToken({ request, set, jwt }); // ✅ Protect all other routes
     });
 
 
