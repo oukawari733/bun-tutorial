@@ -1,5 +1,5 @@
-import {calculatorRoutes} from "./sample/calController.js";
-import {authRoutes} from "./Auth/authController.js";
+import {calculatorRoutes} from "../controllers/sample/calController.js";
+import {authRoutes} from "../controllers/authController.js";
 
 // Function to register all routes in Elysia
 export const registerAllRoutes = (app) => {

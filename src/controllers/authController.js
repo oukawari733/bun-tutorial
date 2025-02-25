@@ -4,7 +4,7 @@ import {
     removeRefreshToken,
     storeRefreshToken,
     verifyPassword
-} from "../../model/auth/authModel.js";
+} from "../model/authModel.js";
 import {t} from "elysia";
 
 export const login = async ({ body, jwt, set }) => {

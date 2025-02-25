@@ -4,7 +4,7 @@ import {jwt} from "@elysiajs/jwt";
 import {swagger} from "@elysiajs/swagger";
 import logger from './utils/logger.js';
 import {connectToDatabase} from './config/db.js';
-import {registerAllRoutes} from './controllers/indexController.js';
+import {registerAllRoutes} from './routes/route.js';
 import {verifyToken} from './utils/authMiddleware.js';
 
 const PORT = process.env.PORT || 3000;

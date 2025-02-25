@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import client from "../../config/db.js";
+import client from "../config/db.js";
 
 
 export const findUserByUsername = async (username) => {
