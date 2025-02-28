@@ -39,6 +39,12 @@ bun install
 
 ```
 
+```bash
+nvm install 18
+nvm use 18
+
+```
+
 ---
 
 ## ⚙️ Environment Setup
@@ -52,6 +58,7 @@ DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=your_password
 DB_NAME=your_database_name
+DB_URL=postgres://username:your_password@localhost:5432/your_database_name
 
 ```
 ---
