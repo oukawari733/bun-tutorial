@@ -1,31 +1,45 @@
-import bcrypt from "bcrypt";
-import client from "../config/db.js";
+import {eq} from "drizzle-orm";
+import {db} from "../config/db.js";
+import {users} from "../entities/auth.js"; // Assuming users entity is here
+import {BaseRepository} from "../repositories/baseRepository.js";
 
+class AuthModel extends BaseRepository {
+    constructor() {
+        super(users);
+    }
 
-export const findUserByUsername = async (username) => {
-    const result = await client.query("SELECT * FROM users WHERE username = $1", [username]);
-    return result.rows[0] || null;
-};
+    async findUserByUsername(username) {
+        const result = await db
+            .select()
+            .from(this.table)
+            .where(eq(this.table.username, username));
 
-export const verifyPassword = async (password, hash) => {
-    return await bcrypt.compare(password, hash);
-};
+        return Array.isArray(result) && result.length > 0 ? result[0] : null;
+    }
 
-export const storeRefreshToken = async (userId, refreshToken) => {
-    await client.query("UPDATE users SET refresh_token = $1 WHERE id = $2", [refreshToken, userId]);
-};
+    async storeRefreshToken(userId, refreshToken) {
+        await db
+            .update(this.table)
+            .set({ refreshToken })
+            .where(eq(this.table.id, userId));
+    }
 
-/**
- * Get refresh token from database
- */
-export const getRefreshToken = async (userId) => {
-    const result = await client.query("SELECT refresh_token FROM users WHERE id = $1", [userId]);
-    return result.rowCount > 0 ? result.rows[0].refresh_token : null;
-};
+    async getRefreshToken(userId) {
+        const result = await db
+            .select({ refreshToken: this.table.refreshToken })
+            .from(this.table)
+            .where(eq(this.table.id, userId));
 
-/**
- * Remove refresh token (Logout)
- */
-export const removeRefreshToken = async (userId) => {
-    await client.query("UPDATE users SET refresh_token = NULL WHERE id = $1", [userId]);
-};
+        return Array.isArray(result) && result.length > 0 ? result[0] : null;
+    }
+
+    async removeRefreshToken(userId) {
+        await db
+            .update(this.table)
+            .set({ refreshToken: null })
+            .where(eq(this.table.id, userId));
+    }
+}
+
+// ✅ Export as a singleton instance
+export const authModel = new AuthModel();

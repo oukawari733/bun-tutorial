@@ -1,19 +1,28 @@
 import {t} from "elysia";
 
-import {loginService, logoutService, refreshTokenService} from "../service/authService.js";
+import {AuthService} from "../service/authService.js";
+import {authDTO} from "../dto/authDTO.js";
+
 
 export const login = async ({ body, jwt, set }) => {
     const { username, password } = body;
-    if (!username || !password) return set.status = 400, { error: "Username and password are required." };
+    if (!username || !password) {
+        set.status = 400;
+        return {error: "Username and password are required."};
+    }
 
-    return await loginService(username, password, jwt);
+    return await AuthService.login(username, password, jwt);
 };
 
 export const refreshToken = async ({ request, jwt, set }) => {
     const refreshToken = request.headers.get("cookie")?.split("=")[1]; // Extract from cookie
-    if (!refreshToken) return set.status = 401, { error: "Unauthorized - No refresh token provided" };
+    if (!refreshToken) {
+        set.status = 401;
+        return { error: "Unauthorized - No refresh token provided" };
+    }
 
-    return await refreshTokenService(refreshToken, jwt);
+
+    return await AuthService.refreshToken(refreshToken, jwt);
 };
 
 export const logout = async ({ request, jwt, set }) => {
@@ -24,7 +33,7 @@ export const logout = async ({ request, jwt, set }) => {
         const decoded = await jwt.verify(refreshToken);
         if (!decoded) return set.status = 403, { error: "Invalid refresh token" };
 
-        await logoutService(decoded.id);
+        await AuthService.logout(decoded.id);
         set.headers["Set-Cookie"] = "refreshToken=; HttpOnly; Secure; Path=/; Max-Age=0";
         return { message: "Logged out successfully" };
     } catch (error) {
@@ -33,6 +42,14 @@ export const logout = async ({ request, jwt, set }) => {
     }
 };
 
+export const register = async ({ body, set }) => {
+    const validated = authDTO.safeParse(body);
+    if (!validated.success) return set.status = 400, { error: validated.error.errors };
+
+    const response = await AuthService.register(validated.data);
+    if (response.error) return set.status = 400, response;
+    return response;
+};
 
 
 
@@ -74,4 +91,15 @@ export const authRoutes = (app) =>
                     description: "Logs out a user by invalidating the refresh token."
                 }
             }
-        );
+        ).post(
+        "/register",
+        register,
+        {
+            body: authDTO,
+            detail: {
+                tags: ["Auth"], // 👈 Group under "Auth"
+                summary: "Register User",
+                description: "Register the new User"
+            }
+        }
+    );

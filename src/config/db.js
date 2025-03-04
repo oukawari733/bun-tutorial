@@ -1,4 +1,5 @@
 import {Client} from 'pg';
+import {drizzle} from "drizzle-orm/node-postgres";
 
 
 // Load environment variables
@@ -34,4 +35,7 @@ export const getDbClient = () => {
     return client;
 };
 
-export default client;
+// Create Drizzle ORM instance
+export const db = drizzle(client);
+
+

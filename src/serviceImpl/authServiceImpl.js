@@ -1,42 +1,75 @@
-import {findUserByUsername, getRefreshToken, removeRefreshToken, storeRefreshToken} from "../model/authModel.js";
+import {authModel} from "../model/authModel.js";
+import {authDTO} from "../dto/authDTO.js";
 import bcrypt from "bcrypt";
 
-export const authenticateUser = async (username, password) => {
-    const user = await findUserByUsername(username);
-    if (!user) return { error: "Invalid credentials" };
+export class AuthServiceImpl {
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return { error: "Invalid credentials" };
+    // Register user with validation
+    async registerUser(userData) {
+        const validated = authDTO.safeParse(userData);
+        if (!validated.success) return { error: validated.error.errors };
 
-    return user;
-};
+        // Hash password
+        const hashedPassword = await bcrypt.hash(validated.data.password, 10);
 
-export const generateTokens = async (user, jwt) => {
-    const accessToken = await jwt.sign({ id: user.id, username: user.username }, { expiresIn: "15m" });
-    const refreshToken = await jwt.sign({ id: user.id }, { expiresIn: "7d" });
+        return await authModel.registerUser({ ...validated.data, password: hashedPassword });
+    }
 
-    await storeRefreshToken(user.id, refreshToken);
-    return { accessToken, refreshToken };
-};
 
-export const validateRefreshToken = async (refreshToken, jwt) => {
-    const decoded = await jwt.verify(refreshToken);
-    if (!decoded) return { error: "Invalid refresh token" };
+    async updateUser(id, userData) {
+        const validated = authDTO.partial().safeParse(userData);
+        if (!validated.success) return { error: validated.error.errors };
 
-    const storedToken = await getRefreshToken(decoded.id);
-    if (storedToken !== refreshToken) return { error: "Refresh token mismatch" };
+        if (userData.password) {
+            userData.password = await bcrypt.hash(userData.password, 10);
+        }
 
-    return decoded;
-};
+        return await authModel.updateUser(id, userData);
+    }
 
-export const refreshAccessToken = async (refreshToken, jwt) => {
-    const decoded = await validateRefreshToken(refreshToken, jwt);
-    if (decoded.error) return decoded;
+    async deleteUser(id) {
+        return await authModel.deleteUser(id);
+    }
 
-    const newAccessToken = await jwt.sign({ id: decoded.id, username: decoded.username }, { expiresIn: "15m" });
-    return { accessToken: newAccessToken };
-};
+    async authenticateUser(username, password) {
+        const user = await authModel.findUserByUsername(username);
+        if (!user) return { error: "Invalid credentials1" };
 
-export const logoutUser = async (userId) => {
-    await removeRefreshToken(userId);
-};
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) return { error: "Invalid credentials2" };
+
+        return user;
+    }
+
+    async generateTokens(user, jwt) {
+        const accessToken = await jwt.sign({ id: user.id, username: user.username }, { expiresIn: "15m" });
+        const refreshToken = await jwt.sign({ id: user.id }, { expiresIn: "7d" });
+
+        await authModel.storeRefreshToken(user.id, refreshToken);
+        return { accessToken, refreshToken };
+    }
+
+    async validateRefreshToken(refreshToken, jwt) {
+        const decoded = await jwt.verify(refreshToken);
+        if (!decoded) return { error: "Invalid refresh token" };
+
+        const storedToken = await authModel.getRefreshToken(decoded.id);
+        if (storedToken !== refreshToken) return { error: "Refresh token mismatch" };
+
+        return decoded;
+    }
+
+    async refreshAccessToken(refreshToken, jwt) {
+        const decoded = await this.validateRefreshToken(refreshToken, jwt);
+        if (decoded.error) return decoded;
+
+        const newAccessToken = await jwt.sign({ id: decoded.id, username: decoded.username }, { expiresIn: "15m" });
+        return { accessToken: newAccessToken };
+    }
+
+    async logoutUser(userId) {
+        await authModel.removeRefreshToken(userId);
+    }
+}
+
+export const authServiceImpl = new AuthServiceImpl();
