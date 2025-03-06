@@ -1,12 +1,17 @@
-import {boolean, pgTable, serial, text, timestamp, varchar} from "drizzle-orm/pg-core";
+import {boolean, pgTable, primaryKey, serial, text, varchar} from "drizzle-orm/pg-core";
+import {auditField} from "../utils/auditHelper.js"; // Import helper
 
-// Users Table
-export const users = pgTable("users", {
-    id: serial("id").primaryKey(),
-    username: varchar("username", { length: 50 }).unique().notNull(),
-    password: text("password").notNull(),
-    email: varchar("email", { length: 100 }).unique(),
-    refreshToken: text("refresh_token"), // Nullable for refresh tokens
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    isActive: boolean("is_active").default(true).notNull()
- });
+export const users = pgTable(
+    'users',
+    auditField({
+        id: serial('id').notNull(),
+        username: varchar('username', { length: 50 }).notNull().unique(),
+        password: text('password').notNull(),
+        email: varchar('email', { length: 100 }).unique(),
+        refreshToken: text('refresh_token'),
+        isActive: boolean('is_active').default(true).notNull(),
+    }),
+    (table) => ({
+        pk: primaryKey({ columns: [table.id, table.username] }), // Composite primary key
+    })
+);

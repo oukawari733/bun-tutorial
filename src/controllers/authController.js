@@ -27,36 +27,64 @@ export const refreshToken = async ({ request, jwt, set }) => {
 
 export const logout = async ({ request, jwt, set }) => {
     const refreshToken = request.headers.get("cookie")?.split("=")[1];
-    if (!refreshToken) return set.status = 400, { error: "No refresh token provided" };
+    if (!refreshToken) {
+        set.status = 400;
+        return { error: "No refresh token provided" };
+    }
 
     try {
         const decoded = await jwt.verify(refreshToken);
-        if (!decoded) return set.status = 403, { error: "Invalid refresh token" };
+        if (!decoded) {
+            set.status = 403;
+            return { error: "Invalid refresh token" };
+        }
 
         await AuthService.logout(decoded.id);
         set.headers["Set-Cookie"] = "refreshToken=; HttpOnly; Secure; Path=/; Max-Age=0";
         return { message: "Logged out successfully" };
     } catch (error) {
         console.error("Logout Error:", error);
-        return set.status = 500, { error: "Internal Server Error" };
+        set.status = 500;
+        return { error: "Internal Server Error" };
     }
 };
 
 export const register = async ({ body, set }) => {
-    const validated = authDTO.safeParse(body);
-    if (!validated.success) return set.status = 400, { error: validated.error.errors };
+    const response = await AuthService.register(body); // <-- No `.data`
+    if (response.error) {
+        set.status = 400;
+        return response;
+    }
 
-    const response = await AuthService.register(validated.data);
-    if (response.error) return set.status = 400, response;
     return response;
 };
 
+export const updateUser = async ({ params, body, set }) => {
+    const { id } = params;
+    const response = await AuthService.update(id, body);
+    if (response.error) {
+        set.status = 400;
+        return response;
+    }
 
+    return response;
+};
+
+export const deleteUser = async ({ params, set }) => {
+    const { username } = params;
+
+    if (!username) {
+        set.status = 400;
+        return { error: "Username is required" };
+    }
+
+    return AuthService.delete(username);
+};
 
 // Register authentication routes
 export const authRoutes = (app) =>
     app.post(
-        "/login",
+        "/auth/login",
         login,
         {
             body: t.Object({
@@ -71,7 +99,7 @@ export const authRoutes = (app) =>
         }
     )
         .post(
-            "/refresh",
+            "/auth/refresh",
             refreshToken,
             {
                 detail: {
@@ -82,7 +110,7 @@ export const authRoutes = (app) =>
             }
         )
         .post(
-            "/logout",
+            "/auth/logout",
             logout,
             {
                 detail: {
@@ -92,14 +120,38 @@ export const authRoutes = (app) =>
                 }
             }
         ).post(
-        "/register",
+        "/auth/register",
         register,
         {
-            body: authDTO,
+            body:  authDTO,
             detail: {
                 tags: ["Auth"], // 👈 Group under "Auth"
                 summary: "Register User",
                 description: "Register the new User"
             }
         }
-    );
+    ).put(
+        "/auth/update/:username",
+        updateUser,
+        {
+            body: authDTO,
+            params: t.Object({ username: t.String() }), // Expecting username in URL
+            detail: {
+                tags: ["Auth"],
+                summary: "Update User",
+                description: "Update an existing user's information",
+            }
+        }
+    ).delete(
+        "/auth/delete/:username",
+        deleteUser,
+        {
+            params: t.Object({ username: t.String() }), // Expecting username in URL
+            detail: {
+                tags: ["Auth"],
+                summary: "Delete User",
+                description: "Delete a user by username",
+            }
+        }
+    )
+;

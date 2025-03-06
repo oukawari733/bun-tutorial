@@ -39,7 +39,14 @@ class AuthModel extends BaseRepository {
             .set({ refreshToken: null })
             .where(eq(this.table.id, userId));
     }
+
+    async deleteByUsername(username) {
+        return db.delete(users).where(eq(users.username, username)).returning();
+    }
+
 }
+
+
 
 // ✅ Export as a singleton instance
 export const authModel = new AuthModel();

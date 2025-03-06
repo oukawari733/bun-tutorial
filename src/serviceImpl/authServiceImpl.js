@@ -1,42 +1,64 @@
 import {authModel} from "../model/authModel.js";
 import {authDTO} from "../dto/authDTO.js";
 import bcrypt from "bcrypt";
+import {Value} from "@sinclair/typebox/value";
 
 export class AuthServiceImpl {
 
     // Register user with validation
     async registerUser(userData) {
-        const validated = authDTO.safeParse(userData);
-        if (!validated.success) return { error: validated.error.errors };
+        // Validate input using TypeBox
+        if (!Value.Check(authDTO, userData)) {
+            return { error: "Invalid input data" };
+        }
+
+        const existingUser = await authModel.findUserByUsername(userData.username);
+        if (existingUser) {
+            return { error: "Username already exists" };
+        }
 
         // Hash password
-        const hashedPassword = await bcrypt.hash(validated.data.password, 10);
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-        return await authModel.registerUser({ ...validated.data, password: hashedPassword });
+        return await authModel.save({ ...userData, password: hashedPassword });
     }
 
 
     async updateUser(id, userData) {
-        const validated = authDTO.partial().safeParse(userData);
-        if (!validated.success) return { error: validated.error.errors };
-
-        if (userData.password) {
-            userData.password = await bcrypt.hash(userData.password, 10);
+        // Validate input using TypeBox
+        if (!Value.Check(authDTO, userData)) {
+            return { error: "Invalid input data" };
         }
 
-        return await authModel.updateUser(id, userData);
+        // Check if user ID exists
+        const existingUser = await authModel.findUserByUsername(userData.username);
+        if (!existingUser) {
+            return { error: "Username is not found" };
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+        return await authModel.update({ ...userData, password: hashedPassword });
     }
 
-    async deleteUser(id) {
-        return await authModel.deleteUser(id);
+    async deleteUser(username) {
+        // Check if the username exists
+        const existingUser = await authModel.findUserByUsername(username);
+        if (!existingUser) {
+            return { error: "Username not found" };
+        }
+
+        // Delete user by username
+        return await authModel.deleteByUsername(username);
     }
 
     async authenticateUser(username, password) {
         const user = await authModel.findUserByUsername(username);
-        if (!user) return { error: "Invalid credentials1" };
+        if (!user) return { error: "Invalid credentials" };
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return { error: "Invalid credentials2" };
+        if (!isMatch) return { error: "Invalid credentials" };
 
         return user;
     }

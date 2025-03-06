@@ -3,7 +3,7 @@ import {authServiceImpl} from "../serviceImpl/authServiceImpl.js";
 export const AuthService = {
     register: (userData) => authServiceImpl.registerUser(userData),
     update: (id, userData) => authServiceImpl.updateUser(id, userData),
-    delete: (id) => authServiceImpl.deleteUser(id),
+    delete: (username) => authServiceImpl.deleteUser(username),
 
     login: async (username, password, jwt) => {
         const user = await authServiceImpl.authenticateUser(username, password);
