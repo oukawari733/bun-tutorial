@@ -14,7 +14,14 @@ class AuthModel extends BaseRepository {
             .from(this.table)
             .where(eq(this.table.username, username));
 
-        return Array.isArray(result) && result.length > 0 ? result[0] : null;
+        // Check if the result is an array and has at least one element
+        if (Array.isArray(result) && result.length > 0) {
+            // Return the first user object
+            return result[0];
+        }
+
+        // Return null if no user is found
+        return null;
     }
 
     async storeRefreshToken(userId, refreshToken) {
@@ -30,7 +37,14 @@ class AuthModel extends BaseRepository {
             .from(this.table)
             .where(eq(this.table.id, userId));
 
-        return Array.isArray(result) && result.length > 0 ? result[0] : null;
+        // Check if the result is an array and has at least one element
+        if (Array.isArray(result) && result.length > 0) {
+            // Return the refreshToken as a string
+            return result[0].refreshToken;
+        }
+
+        // Return null if no result is found
+        return null;
     }
 
     async removeRefreshToken(userId) {

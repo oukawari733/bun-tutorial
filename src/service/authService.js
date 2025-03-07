@@ -5,14 +5,14 @@ export const AuthService = {
     update: (id, userData) => authServiceImpl.updateUser(id, userData),
     delete: (username) => authServiceImpl.deleteUser(username),
 
-    login: async (username, password, jwt) => {
+    login: async (username, password, jwt,set) => {
         const user = await authServiceImpl.authenticateUser(username, password);
         if (user.error) return user;
-        return authServiceImpl.generateTokens(user, jwt);
+        return authServiceImpl.generateTokens(user, jwt,set);
     },
 
     refreshToken: (refreshToken, jwt) => authServiceImpl.refreshAccessToken(refreshToken, jwt),
-    logout: (userId) => authServiceImpl.logoutUser(userId),
+    logout: (refreshToken, jwt) => authServiceImpl.logoutUser(refreshToken, jwt)
 
 };
 

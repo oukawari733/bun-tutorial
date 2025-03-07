@@ -17,3 +17,14 @@ export const verifyToken = async ({ request, set, jwt }) => {
     request.user = decoded; // Attach user info to request
 };
 
+export const parseCookies = (cookieHeader) => {
+    const cookies = {};
+    if (cookieHeader) {
+        cookieHeader.split(";").forEach((cookie) => {
+            const [key, value] = cookie.split("=").map((part) => part.trim());
+            cookies[key] = decodeURIComponent(value);
+        });
+    }
+    return cookies;
+};
+

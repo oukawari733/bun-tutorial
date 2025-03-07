@@ -6,11 +6,13 @@ import logger from './utils/logger.js';
 import {connectToDatabase} from './config/db.js';
 import {registerAllRoutes} from './routes/route.js';
 import {verifyToken} from './utils/authMiddleware.js';
+import {cookie} from "@elysiajs/cookie";
 
 const PORT = process.env.PORT || 3000;
 
 // Initialize Elysia app
 const app = new Elysia()
+    .use(cookie())
     .use(jwt({
         secret: process.env.JWT_SECRET || "your_secret_key",
         exp: "1h"
@@ -36,7 +38,7 @@ const app = new Elysia()
 
     // Global authentication middleware (except for Swagger & Login)
     .onBeforeHandle(({ request, set, jwt }) => {
-        const publicRoutes = ["/login"];
+        const publicRoutes = ["/auth/login"];
         const url = new URL(request.url, `https://${request.headers.host}`).pathname;
 
         if (url.startsWith("/swagger") || publicRoutes.includes(url)) {

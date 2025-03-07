@@ -1,5 +1,5 @@
 import {t} from "elysia";
-
+import {parseCookies} from "../utils/authMiddleware.js"
 import {AuthService} from "../service/authService.js";
 import {authDTO} from "../dto/authDTO.js";
 
@@ -11,11 +11,23 @@ export const login = async ({ body, jwt, set }) => {
         return {error: "Username and password are required."};
     }
 
-    return await AuthService.login(username, password, jwt);
+    return await AuthService.login(username, password, jwt,set);
 };
 
 export const refreshToken = async ({ request, jwt, set }) => {
-    const refreshToken = request.headers.get("cookie")?.split("=")[1]; // Extract from cookie
+    // Parse cookies from the request headers
+    const cookieHeader = request.headers.get("Cookie");
+
+    // Use a helper function to parse the cookies
+    const cookies = parseCookies(cookieHeader);
+
+    // Retrieve the refreshToken cookie
+    const refreshToken = cookies["refreshToken"];
+
+    if (!refreshToken) {
+        set.status = 400;
+        return { error: "No refresh token provided"+refreshToken };
+    }
     if (!refreshToken) {
         set.status = 401;
         return { error: "Unauthorized - No refresh token provided" };
@@ -25,28 +37,37 @@ export const refreshToken = async ({ request, jwt, set }) => {
     return await AuthService.refreshToken(refreshToken, jwt);
 };
 
-export const logout = async ({ request, jwt, set }) => {
-    const refreshToken = request.headers.get("cookie")?.split("=")[1];
+export const logout = ({ request, jwt, set }) => {
+    // Parse cookies from the request headers
+    const cookieHeader = request.headers.get("Cookie");
+
+    // Use a helper function to parse the cookies
+    const cookies = parseCookies(cookieHeader);
+
+    // Retrieve the refreshToken cookie
+    const refreshToken = cookies["refreshToken"];
+
     if (!refreshToken) {
         set.status = 400;
-        return { error: "No refresh token provided" };
+        return { error: "No refresh token provided"+refreshToken };
     }
 
-    try {
-        const decoded = await jwt.verify(refreshToken);
-        if (!decoded) {
-            set.status = 403;
-            return { error: "Invalid refresh token" };
-        }
+    return AuthService.logout(refreshToken, jwt)
+        .then((response) => {
+            if (response.error) {
+                set.status = response.status;
+                return response;
+            }
 
-        await AuthService.logout(decoded.id);
-        set.headers["Set-Cookie"] = "refreshToken=; HttpOnly; Secure; Path=/; Max-Age=0";
-        return { message: "Logged out successfully" };
-    } catch (error) {
-        console.error("Logout Error:", error);
-        set.status = 500;
-        return { error: "Internal Server Error" };
-    }
+            // ✅ Properly clear the refresh token cookie
+            set.headers["Set-Cookie"] = "refreshToken=; HttpOnly; Secure; Path=/; Max-Age=0";
+
+            return response;
+        })
+        .catch(() => {
+            set.status = 500;
+            return { error: "Internal Server Error" };
+        });
 };
 
 export const register = async ({ body, set }) => {

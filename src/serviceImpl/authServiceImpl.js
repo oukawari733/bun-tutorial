@@ -63,11 +63,13 @@ export class AuthServiceImpl {
         return user;
     }
 
-    async generateTokens(user, jwt) {
+    async generateTokens(user, jwt,set) {
         const accessToken = await jwt.sign({ id: user.id, username: user.username }, { expiresIn: "15m" });
         const refreshToken = await jwt.sign({ id: user.id }, { expiresIn: "7d" });
 
         await authModel.storeRefreshToken(user.id, refreshToken);
+        // ✅ Store refresh token in cookie
+        set.headers["Set-Cookie"] = `refreshToken=${refreshToken}; HttpOnly; Secure; Path=/; Max-Age=${7 * 24 * 60 * 60}`;
         return { accessToken, refreshToken };
     }
 
@@ -89,8 +91,26 @@ export class AuthServiceImpl {
         return { accessToken: newAccessToken };
     }
 
-    async logoutUser(userId) {
-        await authModel.removeRefreshToken(userId);
+    async logoutUser(refreshToken, jwt) {
+        try {
+            // ✅ Verify the refresh token
+            const decoded = await jwt.verify(refreshToken);
+            if (!decoded || !decoded.id) {
+                return { status: 403, error: "Invalid refresh token "+refreshToken };
+            }
+
+            // ✅ Check if refresh token exists in DB
+            const storedToken = await authModel.getRefreshToken(decoded.id);
+            if (storedToken !== refreshToken) return { error: "Refresh token mismatch "+storedToken+" "+refreshToken }
+
+            // ✅ Clear the refresh token from DB
+            await authModel.removeRefreshToken(decoded.id);
+
+            return { status: 200, message: "Logged out successfully" };
+        } catch (error) {
+            console.error("Logout Service Error:", error);
+            return { status: 500, error: "Internal Server Error" };
+        }
     }
 }
 
