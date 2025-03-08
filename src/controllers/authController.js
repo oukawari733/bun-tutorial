@@ -26,7 +26,7 @@ export const refreshToken = async ({ request, jwt, set }) => {
 
     if (!refreshToken) {
         set.status = 400;
-        return { error: "No refresh token provided"+refreshToken };
+        return { error: "No refresh token provided" };
     }
     if (!refreshToken) {
         set.status = 401;
@@ -49,7 +49,7 @@ export const logout = ({ request, jwt, set }) => {
 
     if (!refreshToken) {
         set.status = 400;
-        return { error: "No refresh token provided"+refreshToken };
+        return { error: "No refresh token provided" };
     }
 
     return AuthService.logout(refreshToken, jwt)

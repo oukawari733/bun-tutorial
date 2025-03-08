@@ -96,12 +96,12 @@ export class AuthServiceImpl {
             // ✅ Verify the refresh token
             const decoded = await jwt.verify(refreshToken);
             if (!decoded || !decoded.id) {
-                return { status: 403, error: "Invalid refresh token "+refreshToken };
+                return { status: 403, error: "Invalid refresh token " };
             }
 
             // ✅ Check if refresh token exists in DB
             const storedToken = await authModel.getRefreshToken(decoded.id);
-            if (storedToken !== refreshToken) return { error: "Refresh token mismatch "+storedToken+" "+refreshToken }
+            if (storedToken !== refreshToken) return { error: "Refresh token mismatch " }
 
             // ✅ Clear the refresh token from DB
             await authModel.removeRefreshToken(decoded.id);
