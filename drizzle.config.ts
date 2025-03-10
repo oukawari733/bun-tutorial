@@ -2,7 +2,7 @@ import "dotenv/config";
 import type {Config} from "drizzle-kit";
 
 export default {
-  schema: "./src/entities", // Ensure this matches your schema location
+  schema: "./src/entities/**/*.{ts,js}", // Read all subfolders recursively
   out: "./drizzle",
   dialect: "postgresql", // ✅ Explicitly set the dialect
   dbCredentials: {
